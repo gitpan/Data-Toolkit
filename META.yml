@@ -1,7 +1,7 @@
 # http://module-build.sourceforge.net/META-spec.html
 #XXXXXXX This is a prototype!!!  It will change in the future!!! XXXXX#
 name:         Data-Toolkit
-version:      0.2
+version:      0.3
 version_from: 
 installdirs:  site
 requires:
@@ -9,6 +9,7 @@ requires:
     Clone:                         0
     Data::Dumper:                  0
     Data::MultiValuedHash:         0
+    DBD::CSV:                      0
     Net::LDAP::Entry:              0
 
 distribution_type: module

@@ -8,7 +8,7 @@ use ExtUtils::MakeMaker;
 
 WriteMakefile(
     'NAME'		=> 'Data::Toolkit',
-    'VERSION'		=> 0.4,
+    'VERSION'		=> 0.5,
     'PREREQ_PM'		=> {	Data::Dumper => 0,
 				Carp => 0,
 				Clone => 0,

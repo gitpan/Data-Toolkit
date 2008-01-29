@@ -38,7 +38,7 @@ ok (Data::Toolkit::Connector::LDAP->debug($verbose) == $verbose, "Setting Connec
 # From here on we need the OpenLDAP server
 #
 SKIP: {
-	skip ('No OpenLDAP server found on this system', 44)
+	skip ('No OpenLDAP server found on this system', 47)
 		unless (
 			-f '/usr/local/etc/openldap/schema/core.schema' or
 			-f '/usr/local/etc/schema/core.schema' or

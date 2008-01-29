@@ -6,7 +6,7 @@
 # Nov 2006
 # andrew.findlay@skills-1st.co.uk
 #
-# $Id: LDAP.pm 186 2008-01-28 12:30:35Z remotesvn $
+# $Id: LDAP.pm 191 2008-01-29 13:48:12Z remotesvn $
 
 package Data::Toolkit::Connector::LDAP;
 

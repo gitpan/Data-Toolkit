@@ -6,7 +6,7 @@
 # Nov 2006
 # andrew.findlay@skills-1st.co.uk
 #
-# $Id: LDAP.pm 47 2007-01-24 12:32:31Z remotesvn $
+# $Id: LDAP.pm 186 2008-01-28 12:30:35Z remotesvn $
 
 package Data::Toolkit::Connector::LDAP;
 
@@ -61,7 +61,7 @@ Connector for LDAP directories.
 ########################################################################
 
 use vars qw($VERSION);
-$VERSION = '0.1';
+$VERSION = '0.2';
 
 # Set this non-zero for debug logging
 #
@@ -453,6 +453,9 @@ sub current {
 Update the current LDAP entry using data from a source entry and an optional map.
 If no map is supplied, all attributes in the source entry are updated in the LDAP entry.
 
+If a map I<is> supplied then any attribute listed in the map but not in the
+source entry will be deleted from the current entry in LDAP.
+
 Returns the Net::LDAP::Message result of the LDAP update operation.
 
    $msg = $ldapSearch->update($sourceEntry);
@@ -477,14 +480,30 @@ sub update {
 	$dn = $dn->[0] if $dn;
 	carp "Data::Toolkit::Connector::LDAP->update $self DN: $dn" if $debug;
 
+	# Save a copy of the current entry in case the update fails and we need to reset it
+	my $currentSave = clone($self->{currentLDAP});
+
 	# Apply the map if we have one
 	$source = $source->map($map) if $map;
 
-	# Step through the list of attributes remaining in $source and compare with current LDAP entry
+	# Work out which attributes we are going to deal with
+	my @attrlist;
+	if ($map) {
+		# We have a map so take the list of attributes from that
+		# This allows us to delete attributes that are not present in the source entry
+		@attrlist = $map->outputs();
+	}
+	else {
+		# No map supplied so we will only update attributes present in the source entry
+		# i.e. we will not delete any attributes
+		@attrlist = $source->attributes();
+	}
+
+	# Step through the list of attributes and compare source with current LDAP entry
 	# Keep track of whether we do any actual changes, and avoid passing null change to LDAP
 	# (need to synthesise an LDAP result message in that case)
 	my $needUpdate = 0;
-	foreach my $attr ($source->attributes()) {
+	foreach my $attr (@attrlist) {
 		print "ATTR: $attr\n" if $debug;
 
 		# We know that entry objects store attr lists in sorted order so we can use this
@@ -556,7 +575,14 @@ sub update {
 	}
 
 	if ($needUpdate) {
-		return $self->{currentLDAP}->update( $self->{server} );
+		# Do the update
+		my $msg =  $self->{currentLDAP}->update( $self->{server} );
+
+		# Reset currentLDAP if the update failed
+		$self->{currentLDAP} = $currentSave if $msg->is_error();
+
+		# Return the update message
+		return $msg;
 	}
 
 	# Nasty bodge to construct a success message for an operation that we did not

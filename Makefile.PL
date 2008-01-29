@@ -8,7 +8,7 @@ use ExtUtils::MakeMaker;
 
 WriteMakefile(
     'NAME'		=> 'Data::Toolkit',
-    'VERSION'		=> 0.3,
+    'VERSION'		=> 0.4,
     'PREREQ_PM'		=> {	Data::Dumper => 0,
 				Carp => 0,
 				Clone => 0,
@@ -16,6 +16,8 @@ WriteMakefile(
 				Data::MultiValuedHash => 0,
 				Net::LDAP::Entry => 0,
 				DBD::CSV => 0,
+				Text::CSV_XS => 0,
+				SQL::Statement => 1.15,
 			 },
     'test'		=> {TESTS => 'tests/*.t'},
 

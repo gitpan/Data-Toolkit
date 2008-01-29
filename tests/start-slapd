@@ -4,8 +4,10 @@
 #
 # Start the directory server and load the root entry
 
-export PATH=/usr/local/openldap/libexec:/usr/local/libexec:/usr/lib/openldap:/usr/sbin:$PATH
-export LD_AOUT_LIBRARY_PATH=/usr/local/lib
+PATH=/usr/local/openldap/libexec:/usr/local/libexec:/usr/lib/openldap:/usr/sbin:/usr/local/openldap/bin:/usr/local/openldap/sbin:/usr/local/bin:/usr/local/sbin:/usr/bin:/bin:$PATH
+export PATH
+LD_AOUT_LIBRARY_PATH=/usr/local/lib
+export LD_AOUT_LIBRARY_PATH
 
 if test ! -f slapd.conf.test
 then
@@ -41,8 +43,8 @@ slapd	-f openldap-db/slapd.conf \
 
 RET=$?
 
-sleep 1
-ldapadd -x -H ldap://localhost:19389/ -D cn=root,dc=example,dc=org -w secret <<EOF > /dev/null 2>&1
+sleep 5
+ldapadd -x -H ldap://localhost:19389/ -D cn=root,dc=example,dc=org -w secret <<EOF
 dn: dc=example,dc=org
 objectclass: organization
 objectclass: dcobject

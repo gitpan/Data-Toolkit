@@ -9,7 +9,7 @@ use strict;
 use lib '../lib';
 
 use Carp;
-use Test::More tests => 45;
+use Test::More tests => 48;
 
 use Data::Toolkit::Connector;
 use Data::Toolkit::Connector::LDAP;
@@ -220,6 +220,20 @@ SKIP: {
 	print "VERIFY: ", Dumper($verify), "\n" if $verbose;
 	ok (($verify and !$verify->get('telephoneNumber')),
 		"Validate updated data");
+
+	# Now check that we can delete the mail attribute entirely
+	# Start by checking that the attribute currently exists
+	ok (defined($verify->get('mail')), "Mail attribute is currently defined");
+	$person->delete( 'mail' );
+	$msg = $search->update($person, $updateMap);
+	ok ((!$msg->is_error()), "Deleting 'mail' attribute");
+	# Redo the search to find the updated entry
+	$msg = $search->search( $person );
+	$verify = $search->next();
+	print "VERIFY: ", Dumper($verify), "\n" if $verbose;
+	ok (($verify and !defined($verify->get('mail'))),
+		"Validate updated data");
+
 
 	#
 	# Test effect of empty update entry

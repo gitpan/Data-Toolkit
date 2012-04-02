@@ -6,7 +6,7 @@
 # Nov 2006
 # andrew.findlay@skills-1st.co.uk
 #
-# $Id: Map.pm 186 2008-01-28 12:30:35Z remotesvn $
+# $Id: Map.pm 341 2012-04-02 15:29:22Z remotesvn $
 
 package Data::Toolkit::Map;
 
@@ -77,8 +77,18 @@ my $debug = 0;
 =head2 new
 
    my $map = Data::Toolkit::Map->new();
+   my $map = Data::Toolkit::Map->new( {configAttrib => value, ....} );
 
 Creates an object of type Data::Toolkit::Map
+
+Optionally accepts a hash of configuration items chosen from this list:
+
+=over
+
+=item caseSensitiveNames
+
+If this is defined with a true value then attribute names are case-sensitive.
+By default they are not, so "Surname", "surname", and "SurName" are all the same attribute.
 
 =cut
 
@@ -195,6 +205,9 @@ sub set {
 	croak "set requires an attribute name" if (!$attrib);
 	croak "set requires a value" if (!$values);
 
+	# Lower-case the attribute name if necessary
+	$attrib = "\L$attrib" if (!$self->{config}->{caseSensitiveNames});
+
 	carp "Data::Toolkit::Map->set attribute '$attrib'" if $debug;
 
 	return $self->{mapping}->{$attrib} = $values;
@@ -215,6 +228,9 @@ sub unset {
 	my $attrib = shift;
 
 	croak "unset requires an attribute name" if (!$attrib);
+
+	# Lower-case the attribute name if necessary
+	$attrib = "\L$attrib" if (!$self->{config}->{caseSensitiveNames});
 
 	carp "Data::Toolkit::Map->unset attribute '$attrib'" if $debug;
 
@@ -258,6 +274,10 @@ sub generate {
 	my $attrib = shift;
 
 	croak "generate requires an attribute name" if (!$attrib);
+
+	# Lower-case the attribute name if necessary
+	$attrib = "\L$attrib" if (!$self->{config}->{caseSensitiveNames});
+
 	carp "Data::Toolkit::Map->generate for attribute '$attrib'" if $debug;
 
 	my $mapping = $self->{mapping}->{$attrib};
@@ -350,6 +370,10 @@ sub delete {
 	my $attrib = shift;
 
 	croak "delete requires an attribute name" if (!$attrib);
+
+	# Lower-case the attribute name if necessary
+	$attrib = "\L$attrib" if (!$self->{config}->{caseSensitiveNames});
+
 	carp "Data::Toolkit::Map->delete '$attrib'" if $debug;
 
 	return delete $self->{$attrib};

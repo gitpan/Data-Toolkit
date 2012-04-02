@@ -6,9 +6,11 @@
 
 use ExtUtils::MakeMaker;
 
+# NOTE: If you change the VERSION number here, it must also be changed in lib/Data/Toolkit.pm
+
 WriteMakefile(
     'NAME'		=> 'Data::Toolkit',
-    'VERSION'		=> 0.5,
+    'VERSION'		=> 0.8,
     'PREREQ_PM'		=> {	Data::Dumper => 0,
 				Carp => 0,
 				Clone => 0,

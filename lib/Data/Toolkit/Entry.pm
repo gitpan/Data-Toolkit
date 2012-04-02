@@ -6,7 +6,7 @@
 # Nov 2006
 # andrew.findlay@skills-1st.co.uk
 #
-# $Id: Entry.pm 30 2006-12-14 18:47:40Z remotesvn $
+# $Id: Entry.pm 341 2012-04-02 15:29:22Z remotesvn $
 
 package Data::Toolkit::Entry;
 
@@ -309,6 +309,9 @@ sub attrCmp {
 	my $val2 = shift;
 
 	croak "Data::Template::Entry->attrCmp needs an attribute name" if !$attrib;
+
+	# Lower-case the attribute name if necessary
+	$attrib = "\L$attrib" if (!$self->{config}->{caseSensitiveNames});
 
 	# Find the comparator for this attribute
 	my $comparator = $self->{config}->{comparator}->{$attrib};

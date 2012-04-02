@@ -1,4 +1,6 @@
 README
+CHANGES
+lib/Data/Toolkit.pm
 lib/Data/Toolkit/Map.pm
 lib/Data/Toolkit/Entry.pm
 lib/Data/Toolkit/Connector.pm

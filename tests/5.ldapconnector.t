@@ -9,7 +9,7 @@ use strict;
 use lib '../lib';
 
 use Carp;
-use Test::More tests => 48;
+use Test::More tests => 51;
 
 use Data::Toolkit::Connector;
 use Data::Toolkit::Connector::LDAP;
@@ -35,10 +35,34 @@ chdir 'tests' if -d 'tests';
 my $verbose = 0;
 ok (Data::Toolkit::Connector::LDAP->debug($verbose) == $verbose, "Setting Connector debug level to $verbose");
 
+
+# Basic test without LDAP server
+{
+	my $conn = Data::Toolkit::Connector::LDAP->new();
+	ok (($conn and $conn->isa( "Data::Toolkit::Connector::LDAP" )), "Create new Data::Toolkit::Connector::LDAP object");
+	my $ent = Net::LDAP::Entry->new();
+	ok (($ent and $ent->isa( "Net::LDAP::Entry" )), "Create new Net::LDAP::Entry object");
+	$ent->add( 'myattr' => 'myval' );
+
+	# Make sure that when we set a Net::LDAP::Entry as current it gets converted to Data::Toolkit::Entry
+	my $ent2 = $conn->current( $ent );
+	ok (($ent2 and $ent2->isa( "Data::Toolkit::Entry" )), "Current entry was converted to the right type");
+	# print Dumper( $ent2 ), "\n";
+	my $val = $ent2->get( 'myattr' );
+	$val = $val->[0] if $val;
+	ok (($val and ($val eq 'myval')), "Retrieve value from entry");
+
+	# If we tell the connector to update the entry to itself it should return OK status
+	# without ever using LDAP
+	# my $msg = $conn->update( $ent2 );
+	# ok (($msg and ($msg->is_error() == 0)), "Null update return status");
+}
+
+
 # From here on we need the OpenLDAP server
 #
 SKIP: {
-	skip ('No OpenLDAP server found on this system', 47)
+	skip ('No OpenLDAP server found on this system', 46)
 		unless (
 			-f '/usr/local/etc/openldap/schema/core.schema' or
 			-f '/usr/local/etc/schema/core.schema' or
@@ -48,7 +72,8 @@ SKIP: {
 
 	# Clean out LDAP server and restart it
 	ok ( ((system './clear-slapd') == 0), "Clear LDAP server");
-	ok ( ((system './start-slapd') == 0), "Start LDAP server");
+	skip( 'Cannot start OpenLDAP server', 45)
+		unless ((system './start-slapd') == 0);
 
 
 	my $conn = Data::Toolkit::Connector::LDAP->new();

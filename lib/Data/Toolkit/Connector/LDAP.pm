@@ -6,7 +6,7 @@
 # Nov 2006
 # andrew.findlay@skills-1st.co.uk
 #
-# $Id: LDAP.pm 191 2008-01-29 13:48:12Z remotesvn $
+# $Id: LDAP.pm 341 2012-04-02 15:29:22Z remotesvn $
 
 package Data::Toolkit::Connector::LDAP;
 
@@ -61,7 +61,7 @@ Connector for LDAP directories.
 ########################################################################
 
 use vars qw($VERSION);
-$VERSION = '0.2';
+$VERSION = '0.6';
 
 # Set this non-zero for debug logging
 #
@@ -428,19 +428,53 @@ sub next {
 
 =head2 current
 
-Return the current entry in the list of search results.
+Return the current entry in the list of search results as a Data::Toolkit::Entry.
 The current entry is not defined until the "next" method has been called after a search.
+Alternatively the current entry can be set by passing a Net::LDAP::Entry
+object to this method.
 
-   $entry = $ldapSearch->current();
+   $entry = $ldapConn->current();
+   $entry = $ldapConn->current( $newEntry );
+
+NOTE: if you intend to modify the returned entry you should clone it first,
+as it is a reference to the connector's copy.
 
 =cut
 
 sub current {
 	my $self = shift;
+	my $newCurrent = shift;
 
-	my $dn;
-	$dn = $self->{current}->get('_dn') if $self->{current};
-	carp "Data::Toolkit::Connector::LDAP->current $self DN: $dn" if $debug;
+	if ($newCurrent) {
+		croak "Data::Toolkit::Connector::LDAP->current expects a Net::LDAP::Entry"
+			unless $newCurrent->isa("Net::LDAP::Entry");
+		carp "Data::Toolkit::Connector::LDAP->current converting Net::LDAP::Entry" if $debug;
+
+		# Build an entry
+		my $entry = Data::Toolkit::Entry->new();
+
+		# Set the DN
+		$entry->set( '_dn', [ $newCurrent->dn() ] );
+
+		# Now step through the LDAP attributes and assign data to attributes in the entry
+		my $attrib;
+		my @attributes = $newCurrent->attributes();
+
+		foreach $attrib (@attributes) {
+			$entry->set( $attrib, $newCurrent->get_value( $attrib, asref => 1 ) );
+		}
+
+		$self->{current} = $entry;
+		$self->{currentLDAP} = $newCurrent;
+	}
+
+	if ($debug) {
+		my $dn;
+		my $setting = '';
+		$setting = "setting " if $newCurrent;
+		$dn = $self->{current}->get('_dn') if $self->{current};
+		carp "Data::Toolkit::Connector::LDAP->current $setting$self DN: $dn";
+	}
 
 	return $self->{current};
 }
@@ -458,8 +492,8 @@ source entry will be deleted from the current entry in LDAP.
 
 Returns the Net::LDAP::Message result of the LDAP update operation.
 
-   $msg = $ldapSearch->update($sourceEntry);
-   $msg = $ldapSearch->update($sourceEntry, $updateMap);
+   $msg = $ldapConn->update($sourceEntry);
+   $msg = $ldapConn->update($sourceEntry, $updateMap);
 
 =cut
 
@@ -588,6 +622,7 @@ sub update {
 	# Nasty bodge to construct a success message for an operation that we did not
 	# actually do.
 	# FIXME: find a better way to do this.
+	# FIXME: it must support the $msg->is_error() and $msg->code() methods...
 	my $bodge = clone($self->{searchresult});
 	$bodge->{parent} = undef;
 	$bodge->{resultCode} = 0;

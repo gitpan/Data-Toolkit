@@ -7,7 +7,7 @@ use strict;
 use lib '../lib';
 
 use Carp;
-use Test::Simple tests => 15;
+use Test::Simple tests => 18;
 
 use Data::Dumper;
 use Data::Toolkit::Entry;
@@ -30,7 +30,14 @@ ok ( ((scalar @$res) == 2), "Setting a fixed attribute mapping");
 # print "SET: ", (join ",", $map->set('cn',['Andrew Findlay','A J Findlay'])), "\n";
 ok ( ((join ",",$map->outputs()) eq 'cn,sn'), "Map has right outputs" );
 
+# The default is for case-insensitive attribute names so test that
+$res = $map->set('CamelCase',['Dromedary']);
+ok ( ((scalar @$res) == 1), "Setting a fixed attribute mapping with CamelCase name");
 # print "OUT: " . (join ",",$map->outputs()) . "\n";
+ok ( ((join ",",$map->outputs()) eq 'cn,sn,camelcase'), "Map has right outputs" );
+
+my $beast = $map->generate( 'cAMELcase' );
+ok (($beast and ($beast->[0] eq 'Dromedary')), "Map returns correct result if attribute name given in wrong case");
 
 sub buildPhone {
 	return [ "+44 " . "1234 567890" ];

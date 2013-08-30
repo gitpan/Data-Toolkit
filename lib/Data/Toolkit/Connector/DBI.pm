@@ -6,7 +6,7 @@
 # Dec 2006
 # andrew.findlay@skills-1st.co.uk
 #
-# $Id: DBI.pm 36 2006-12-20 20:28:38Z remotesvn $
+# $Id: DBI.pm 388 2013-08-30 15:19:23Z remotesvn $
 
 package Data::Toolkit::Connector::DBI;
 
@@ -14,6 +14,7 @@ use strict;
 use Carp;
 use Clone qw(clone);
 use DBI;
+use Data::Toolkit::Entry;
 use Data::Toolkit::Connector;
 use Data::Dumper;
 
@@ -96,7 +97,7 @@ placeholder convention it will all work.
 ########################################################################
 
 use vars qw($VERSION);
-$VERSION = '0.1';
+$VERSION = '1.0';
 
 # Set this non-zero for debug logging
 #

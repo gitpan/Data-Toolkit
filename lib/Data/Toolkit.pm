@@ -6,7 +6,7 @@
 # Jan 2008
 # andrew.findlay@skills-1st.co.uk
 #
-# $Id: Toolkit.pm 341 2012-04-02 15:29:22Z remotesvn $
+# $Id: Toolkit.pm 388 2013-08-30 15:19:23Z remotesvn $
 
 package Data::Toolkit;
 
@@ -40,7 +40,7 @@ directory synchronisation etc.
 ########################################################################
 
 use vars qw($VERSION);
-$VERSION = '0.8';
+$VERSION = '1.0';
 
 # Set this non-zero for debug logging
 #

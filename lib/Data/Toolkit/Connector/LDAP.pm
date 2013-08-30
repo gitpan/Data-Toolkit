@@ -6,7 +6,7 @@
 # Nov 2006
 # andrew.findlay@skills-1st.co.uk
 #
-# $Id: LDAP.pm 341 2012-04-02 15:29:22Z remotesvn $
+# $Id: LDAP.pm 388 2013-08-30 15:19:23Z remotesvn $
 
 package Data::Toolkit::Connector::LDAP;
 
@@ -14,6 +14,7 @@ use strict;
 use Carp;
 use Clone qw(clone);
 use Net::LDAP::Entry;
+use Data::Toolkit::Entry;
 use Data::Toolkit::Connector;
 use Data::Dumper;
 
@@ -61,7 +62,7 @@ Connector for LDAP directories.
 ########################################################################
 
 use vars qw($VERSION);
-$VERSION = '0.6';
+$VERSION = '1.0';
 
 # Set this non-zero for debug logging
 #

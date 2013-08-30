@@ -10,7 +10,7 @@ use ExtUtils::MakeMaker;
 
 WriteMakefile(
     'NAME'		=> 'Data::Toolkit',
-    'VERSION'		=> 0.8,
+    'VERSION'		=> 1.0,
     'PREREQ_PM'		=> {	Data::Dumper => 0,
 				Carp => 0,
 				Clone => 0,

@@ -6,7 +6,7 @@
 # Nov 2006
 # andrew.findlay@skills-1st.co.uk
 #
-# $Id: Map.pm 341 2012-04-02 15:29:22Z remotesvn $
+# $Id: Map.pm 388 2013-08-30 15:19:23Z remotesvn $
 
 package Data::Toolkit::Map;
 
@@ -62,7 +62,7 @@ different data representations in directory-synchronisation projects.
 ########################################################################
 
 use vars qw($VERSION);
-$VERSION = '0.1';
+$VERSION = '1.0';
 
 # Set this non-zero for debug logging
 #
@@ -90,6 +90,80 @@ Optionally accepts a hash of configuration items chosen from this list:
 If this is defined with a true value then attribute names are case-sensitive.
 By default they are not, so "Surname", "surname", and "SurName" are all the same attribute.
 
+=item defaultMissingValueBehaviour
+
+This is a hash defining what to do when mapping attributes that do not have values.
+The keys are:
+
+=over
+
+=item missing
+
+Defines the behaviour when an input attribute is entirely missing.
+
+=item noValues
+
+Defines the behaviour when an input attribute exists but it has no values.
+
+=item nullValue
+
+Defines the behaviour when an input attribute exists and its first value is undef.
+
+=item emptyString
+
+Defines the behaviour when an input attribute has an empty string as its first value.
+
+=back
+
+The possible values are:
+
+=over
+
+=item delete
+
+Delete the attribute entirely from the output of the map.
+If the generate method is used on such an attribute, it will return undef.
+
+=item noValues
+
+The attribute will appear in the output of the map but no values will be defined.
+If the generate method is used on such an attribute, it will return an empty array.
+
+=item nullValue
+
+The attribute will appear in the output of the map and its single value will be undef.
+If the generate method is used on such an attribute, it will return an array containing one undef element.
+
+=item emptyString
+
+The attribute will appear in the output of the map with a single empty string value.
+
+=item A subroutine reference or closure
+
+If a pointer to an executable procedure is used as the value, that procedure
+will be called and its return value used as the value of the attribute.
+The return value can be undef, scalar, vector, or hash.
+There is no way for the subroutine to request deletion of the entire attribute.
+
+The subroutine is called with the name of the attribute being generated as its first parameter,
+an indication of whether an array result is wanted as its second parameter,
+and a reference to the input entry as its third parameter:
+
+subroutine( $attributename, $wantarray, $entry);
+
+=back
+
+The default missing value behaviour is:
+
+		{
+			missing => 'delete',
+			noValues => 'noValues',
+			nullValue => 'nullValue',
+			emptyString => 'emptyString',
+		};
+
+=back
+
 =cut
 
 sub new {
@@ -113,6 +187,13 @@ sub new {
 	else {
 		# Start with empty config
 		$self->{config} = {};
+		# Add the default missing value behaviour
+		$self->{config}->{defaultMissingValueBehaviour} = {
+			missing => 'delete',
+			noValues => 'noValues',
+			nullValue => 'nullValue',
+			emptyString => 'emptyString',
+		};
 	}
 
 	bless ($self, $class);
@@ -253,11 +334,53 @@ Returns an empty list if there are no attributes.
 sub outputs {
 	my $self = shift;
 
-	my @keys_list = CORE::keys %{$self->{mapping}};
+	my @keys_list = sort(CORE::keys %{$self->{mapping}});
 	carp "Data::Toolkit::Map->outputs are: " . (join ',', @keys_list) if $debug;
         return( wantarray ? @keys_list : \@keys_list );
 
 }
+
+########################################
+#
+# generateMissingValue( $attrib, $wantarray, $requiredBehaviour, $entry );
+#
+# Internal procedure for handling missing values
+
+sub generateMissingValue {
+	my ($attrib, $wantarray, $requiredBehaviour, $entry) = @_;
+
+	croak "generateMissingValue needs a requiredBehaviour parameter" if (!$requiredBehaviour);
+
+	carp "generateMissingValue '$attrib', $wantarray, '$requiredBehaviour'" if $debug;
+	if ( $requiredBehaviour eq 'delete' ) {
+		return undef;
+	}
+
+	if ($requiredBehaviour eq 'noValues') {
+		# Return an empty array
+		my $res = [];
+		return ($wantarray ? @$res : $res);
+	}
+
+	if ($requiredBehaviour eq 'nullValue') {
+		# Return an array containing an undef value
+		my $res = [ undef ];
+		return ($wantarray ? @$res : $res);
+	}
+
+	if ($requiredBehaviour eq 'emptyString') {
+		my $res = [''];
+		return ($wantarray ? @$res : $res);
+	}
+
+	if ((ref $requiredBehaviour) eq 'CODE') {
+		# We have been given some code to run
+                return &$requiredBehaviour($attrib, $wantarray, $entry);
+	}
+
+	croak "generateMissingValue was given an invalid requiredBehaviour parameter ($requiredBehaviour)";
+}
+
 
 ########################################
 
@@ -265,7 +388,7 @@ sub outputs {
 
 Generate a list of values for a given attribute.
 
-   $values = $map->generate('attributeName', $entry [, $entry...]);
+   $values = $map->generate('attributeName', $entry );
 
 =cut
 
@@ -292,6 +415,38 @@ sub generate {
 		# Must be a simple attribute map so get the source entry
 		my $entry = shift;
 		my @values = $entry->get($mapping);
+
+		if (not $values[0]) {
+			# We may have a missing value or attribute in the source
+			# (or it may just be zero...) so do some checks
+			my $valref = $entry->get($mapping);
+			if (not defined($valref)) {
+				# The attribute is entirely missing in the source
+				carp "generate attribute '$attrib' from missing source attr" if $debug;
+				return generateMissingValue( $attrib, wantarray,
+					$self->{config}->{defaultMissingValueBehaviour}->{missing}, $entry );
+			}
+			if ((scalar @$valref) == 0) {
+				# The attribute is present but has no values
+				carp "generate attribute '$attrib' from source attr with no values" if $debug;
+				return generateMissingValue( $attrib, wantarray,
+					$self->{config}->{defaultMissingValueBehaviour}->{noValues}, $entry );
+			}
+			if (not defined($valref->[0])) {
+				# The attribute is present but has a null value
+				carp "generate attribute '$attrib' from null valued source attr" if $debug;
+				return generateMissingValue( $attrib, wantarray,
+					$self->{config}->{defaultMissingValueBehaviour}->{nullValue}, $entry );
+			}
+			if ($valref->[0] eq '') {
+				# The attribute is present and the value is an empty string
+				carp "generate attribute '$attrib' from empty string source attr" if $debug;
+				return generateMissingValue( $attrib, wantarray,
+					$self->{config}->{defaultMissingValueBehaviour}->{emptyString}, $entry );
+			}
+			# In all other cases, just return what was there in the source entry
+		}
+
 		return wantarray ? @values : \@values;
 	}
 	elsif ($refMap eq 'ARRAY') {

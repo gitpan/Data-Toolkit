@@ -6,7 +6,7 @@
 # Nov 2006
 # andrew.findlay@skills-1st.co.uk
 #
-# $Id: CSV.pm 25 2006-12-12 18:35:26Z remotesvn $
+# $Id: CSV.pm 388 2013-08-30 15:19:23Z remotesvn $
 
 package Data::Toolkit::Connector::CSV;
 
@@ -15,6 +15,7 @@ use Carp;
 use Clone qw(clone);
 use Data::Dumper;
 
+use Data::Toolkit::Entry;
 use Data::Toolkit::Connector;
 our @ISA = ("Data::Toolkit::Connector");
 
@@ -53,7 +54,7 @@ Connector for reading CSV files.
 ########################################################################
 
 use vars qw($VERSION);
-$VERSION = '0.1';
+$VERSION = '1.0';
 
 # Set this non-zero for debug logging
 #

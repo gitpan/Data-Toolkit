@@ -6,7 +6,7 @@
 # Nov 2006
 # andrew.findlay@skills-1st.co.uk
 #
-# $Id: Connector.pm 20 2006-11-30 17:18:40Z remotesvn $
+# $Id: Connector.pm 388 2013-08-30 15:19:23Z remotesvn $
 
 package Data::Toolkit::Connector;
 
@@ -39,7 +39,7 @@ Base class for objects that connect to data sources
 ########################################################################
 
 use vars qw($VERSION);
-$VERSION = '0.1';
+$VERSION = '1.0';
 
 # Set this non-zero for debug logging
 #

@@ -17,7 +17,6 @@ tests/3.entrymaps.t
 tests/slapd.conf.test
 tests/5.ldapconnector.t
 tests/6.dbiconnector.t
-tests/people.csv
 tests/stop-slapd
 Makefile.PL
 MANIFEST

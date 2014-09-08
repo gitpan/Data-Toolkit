@@ -1,8 +1,6 @@
 #!/usr/bin/perl -w
 #
 # Tests for Data::Toolkit::Connector::DBI
-#
-# These require the DBD:CSV module
 
 use strict;
 
@@ -17,11 +15,11 @@ use Data::Toolkit::Entry;
 use Data::Toolkit::Map;
 use Data::Dumper;
 use DBI;
-use DBD::CSV;
+# Not explicitly needed here, but this makes the point that we need the module:
+use DBD::SQLite;
 #
-use SQL::Statement 1.15;
-# NOTE: we really do need 1.15 or above: there is a bug in UPDATE in 1.14
-# SQL::Statement is used in DBD::CSV
+
+my $dbFile = "testdbfile.sqlite";
 
 # Get to the right directory
 chdir 'tests' if -d 'tests';
@@ -29,25 +27,24 @@ chdir 'tests' if -d 'tests';
 my $verbose = 0;
 ok (Data::Toolkit::Connector::DBI->debug($verbose) == $verbose, "Setting Connector debug level to $verbose");
 
+# Remove the old DB file if it exists
+unlink $dbFile;
 
 my $db = Data::Toolkit::Connector::DBI->new();
 ok (($db and $db->isa( "Data::Toolkit::Connector::DBI" )), "Create new Data::Toolkit::Connector::DBI object");
 
-# Wind up the CSV module
-my $dbh = DBI->connect("DBI:CSV:f_dir=.;csv_sep_char=,;csv_eol=\n;")
+# Wind up the database module
+my $dbh = DBI->connect("dbi:SQLite:dbname=$dbFile")
 	or die "Cannot connect: " . $DBI::errstr;
 
-$dbh->{csv_tables}->{people} = {
-		file=>'people.csv',
-		col_names=>[
-			'joinkey',
-			'sn',
-			'initials',
-		],
-	};
+# Create a table
+$dbh->do( "CREATE TABLE people ( joinkey INTEGER, sn VARCHAR, initials VARCHAR )" )
+	or die "Cannot create people table: " . $DBI::errstr;
 
-# Remove any entries left over from previous tests
-$dbh->do("DELETE FROM people WHERE joinkey >= 100");
+# Load some data
+$dbh->do( "INSERT INTO people (joinkey, sn, initials) values(1,'Smith','J')" ) or die "Cannot insert data into people table" . $DBI::errstr;
+$dbh->do( "INSERT INTO people (joinkey, sn, initials) values(2,'Jones','I')" ) or die "Cannot insert data into people table" . $DBI::errstr;
+$dbh->do( "INSERT INTO people (joinkey, sn, initials) values(3,'Brown','A')" ) or die "Cannot insert data into people table" . $DBI::errstr;
 
 ok ($db->server( $dbh ), "Assign DBI server connection");
 
@@ -102,6 +99,7 @@ my $e3 = Data::Toolkit::Entry->new();
 $e3->set('key',[101]);
 $e3->set('sn',['Dent']);
 $e3->set('initials',['A']);
+print "e3: ", $e3->dump(), "\n" if $verbose;
 
 $db->addspec( "INSERT INTO people (joinkey,sn,initials) VALUES (%key%, %sn%, %initials%)" );
 ok (($db->add($e3) == 1), "Add one row to the database");
@@ -148,7 +146,8 @@ ok (($entry and $entry->get('sn')->[0] eq 'Smith'), "Selecting on sn LIKE 'S%'")
 # Getting placehoders to work with LIKE could be a challenge...
 #
 $e3->set('firstletter', ['J']);
-$db->filterspec( "SELECT joinkey,sn FROM people WHERE sn LIKE CONCAT(%firstletter%, '%%')" );
+# $db->filterspec( "SELECT joinkey,sn FROM people WHERE sn LIKE CONCAT(%firstletter%, '%%')" );
+$db->filterspec( "SELECT joinkey,sn FROM people WHERE sn LIKE (%firstletter% || '%%')" );
 $db->search($e3) or die "Search operation failed: cannot continue";
 $entry = $db->next();
 ok (($entry and $entry->get('sn')->[0] eq 'Jones'), "Selecting on sn LIKE with placeholder and %");
